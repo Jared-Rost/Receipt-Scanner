@@ -9,6 +9,8 @@ const RECEIPTS_DIR = `${FileSystem.documentDirectory}receipts`;
 interface Receipt {
   id: string;
   text: string;
+  store: string;
+  amount: string;
   date: string;
   category: string;
 }
@@ -24,48 +26,14 @@ const categories = [
 ];
 
 export default function HomeScreen() {
-  const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [receipts, setReceipts] = useState<Receipt[]>([
+    { id: '1', text: 'Groceries', store: 'Walmart', amount: '$45.23', date: '2025-02-22', category: 'grocery' },
+    { id: '2', text: 'Dinner at McDonalds', store: 'McDonalds', amount: '$12.99', date: '2025-02-21', category: 'dining' },
+    { id: '3', text: 'XHM4', store: 'Best Buy', amount: '$89.99', date: '2025-02-20', category: 'technology' },
+    { id: '4', text: 'Movie Ticket', store: 'Cineplex', amount: '$14.50', date: '2025-02-19', category: 'entertainment' },
+  ]);
   const [newReceiptText, setNewReceiptText] = useState('');
-  const [newReceiptCategory, setNewReceiptCategory] = useState(categories[0].name);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-
-  useEffect(() => {
-    loadReceipts();
-  }, []);
-
-  const loadReceipts = async () => {
-    try {
-      const dirInfo = await FileSystem.getInfoAsync(RECEIPTS_DIR);
-      if (!dirInfo.exists) {
-        await FileSystem.makeDirectoryAsync(RECEIPTS_DIR, { intermediates: true });
-      }
-
-      const files = await FileSystem.readDirectoryAsync(RECEIPTS_DIR);
-      const receiptData = await Promise.all(
-        files.map(async (file) => {
-          const content = await FileSystem.readAsStringAsync(`${RECEIPTS_DIR}/${file}`);
-          return JSON.parse(content) as Receipt;
-        })
-      );
-      setReceipts(receiptData);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const addReceipt = async () => {
-    const newReceipt: Receipt = {
-      id: uuidv4(),
-      text: newReceiptText,
-      date: new Date().toISOString(),
-      category: newReceiptCategory,
-    };
-
-    const filePath = `${RECEIPTS_DIR}/${newReceipt.id}.json`;
-    await FileSystem.writeAsStringAsync(filePath, JSON.stringify(newReceipt));
-    setReceipts([...receipts, newReceipt]);
-    setNewReceiptText('');
-  };
 
   const toggleCategory = (category: string) => {
     setSelectedCategories((prev) =>
@@ -79,13 +47,6 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="New receipt text"
-        value={newReceiptText}
-        onChangeText={setNewReceiptText}
-      />
-      <Button title="Add Receipt" onPress={addReceipt} />
       <ScrollView horizontal style={styles.filterBar}>
         <View style={styles.filterBarContent}>
           {categories.map((category) => (
@@ -105,14 +66,16 @@ export default function HomeScreen() {
           ))}
         </View>
       </ScrollView>
+      
       <FlatList
         data={filteredReceipts}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.receipt}>
-            <Text>{item.text}</Text>
-            <Text>{item.date}</Text>
-            <Text>{item.category}</Text>
+          <View style={styles.card}>
+            <Text style={styles.storeName}>{item.store}</Text>
+            <Text style={styles.receiptText}>{item.text}</Text>
+            <Text style={styles.amount}>{item.amount}</Text>
+            <Text style={styles.date}>{item.date}</Text>
           </View>
         )}
       />
@@ -125,35 +88,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-  },
-  categoryPicker: {
-    flexDirection: 'row',
-    marginBottom: 10,
-  },
-  categoryButton: {
-    flex: 1,
-    paddingVertical: 5,
-    marginHorizontal: 2,
-    alignItems: 'center',
-    borderRadius: 15,
-  },
-  selectedCategory: {
-    borderWidth: 2,
-    borderColor: 'black',
-  },
-  categoryButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
   filterBar: {
-    flexDirection: 'row',
     marginBottom: 10,
   },
   filterBarContent: {
@@ -161,11 +96,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   filterButton: {
-    paddingHorizontal: 5,
-    marginHorizontal: 2,
+    paddingHorizontal: 10,
+    marginHorizontal: 5,
     alignItems: 'center',
     borderRadius: 15,
-    height: 20,
+    height: 30,
+    justifyContent: 'center',
   },
   selectedFilter: {
     borderWidth: 2,
@@ -176,9 +112,32 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 12,
   },
-  receipt: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'gray',
+  card: {
+    backgroundColor: '#fff',
+    padding: 15,
+    marginVertical: 8,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  storeName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  receiptText: {
+    fontSize: 14,
+    color: '#555',
+  },
+  amount: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#008000',
+  },
+  date: {
+    fontSize: 12,
+    color: '#888',
   },
 });
+
