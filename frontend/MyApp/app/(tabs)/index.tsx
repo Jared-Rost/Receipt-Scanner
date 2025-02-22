@@ -87,21 +87,23 @@ export default function HomeScreen() {
       />
       <Button title="Add Receipt" onPress={addReceipt} />
       <ScrollView horizontal style={styles.filterBar}>
-        {categories.map((category) => (
-          <TouchableOpacity
-            key={category.name}
-            style={[
-              styles.filterButton,
-              { backgroundColor: selectedCategories.length === 0 || selectedCategories.includes(category.name) ? category.color : '#D3D3D3' },
-              selectedCategories.includes(category.name) && styles.selectedFilter,
-            ]}
-            onPress={() => toggleCategory(category.name)}
-          >
-            <Text style={styles.filterButtonText}>
-              {category.name} ({receipts.filter((r) => r.category === category.name).length})
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <View style={styles.filterBarContent}>
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category.name}
+              style={[
+                styles.filterButton,
+                { backgroundColor: selectedCategories.length === 0 || selectedCategories.includes(category.name) ? category.color : '#D3D3D3' },
+                selectedCategories.includes(category.name) && styles.selectedFilter,
+              ]}
+              onPress={() => toggleCategory(category.name)}
+            >
+              <Text style={styles.filterButtonText}>
+                {category.name} ({receipts.filter((r) => r.category === category.name).length})
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </ScrollView>
       <FlatList
         data={filteredReceipts}
@@ -153,6 +155,10 @@ const styles = StyleSheet.create({
   filterBar: {
     flexDirection: 'row',
     marginBottom: 10,
+  },
+  filterBarContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   filterButton: {
     paddingHorizontal: 5,
