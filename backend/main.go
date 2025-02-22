@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/khalidzahra/receipt-scanner/ocr"
+	"github.com/khalidzahra/receipt-scanner/tts"
 )
 
 func main() {
@@ -64,6 +66,32 @@ func main() {
 		})
 	})
 
-	// Start the server on port 3000
+	app.Post("/tts", func(c fiber.Ctx) error {
+		var request struct {
+			Text string `json:"text"`
+		}
+
+		if err := json.Unmarshal(c.Body(), &request); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid JSON payload",
+			})
+		}
+
+		if request.Text == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Text field is required",
+			})
+		}
+
+		outputFile, err := tts.SendTextToSpeech(request.Text)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		return c.SendFile(outputFile)
+	})
+
 	log.Fatal(app.Listen(":3000"))
 }
