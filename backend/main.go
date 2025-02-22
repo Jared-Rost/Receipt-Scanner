@@ -20,46 +20,47 @@ func main() {
 		return c.SendString("Hello, World 👋!")
 	})
 
-	app.Get("/receipt", func(c fiber.Ctx) error {
+	// Create an endpoint for receiving an image and returning the extracted text
+	app.Post("/process", func(c fiber.Ctx) error {
+		// Parse the form file
+		file, err := c.FormFile("image")
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
 
+		// Save the file to the server
+		err = c.SaveFile(file, "./images/"+file.Filename)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		// Extract text from the image
 		text, err := ocr.ExtractTextFromImage("receipt.jpeg")
-
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		}
 
-		log.Printf("Extracted text: %s", text)
+		log.Println(text)
 
+		categories, err := ocr.SendTextToGemini(text)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		log.Println(categories)
+
+		// Return the extracted text
 		return c.JSON(fiber.Map{
-			"text": text,
-		})
-	})
-
-	app.Get("/gemini", func(c fiber.Ctx) error {
-		text, err := ocr.ExtractTextFromImage("receipt.jpeg")
-
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-
-		log.Printf("Extracted text: %s", text)
-
-		geminiText, err := ocr.SendTextToGemini(text)
-
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-
-		log.Printf("Gemini response: %s", geminiText)
-
-		return c.JSON(fiber.Map{
-			"text": geminiText,
+			"categories": categories,
+			"text":       text,
 		})
 	})
 
