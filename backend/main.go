@@ -70,7 +70,7 @@ func main() {
 
 		if err := json.Unmarshal(c.Body(), &request); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Invalid JSON payload",
+				"error": "Invalid JSON payload (receipt not in standard form)",
 			})
 		}
 
