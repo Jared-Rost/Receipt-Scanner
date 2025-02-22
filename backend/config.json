@@ -1,0 +1,3 @@
+{
+    "geminiQuery": "\n\n\nThis is a parsed receipt. Give this receipt some tags that can be used to categorize it. This will be used in a search funcationality such that receipts with different tags can be easily found. The available tags are: grocery, dining, retail, entertainment, technology, personal care, other. Make sure your output is in the format:\n{\n\"category\": [\"cat1\", \"cat2\", \"cat3\"]\n}\n\n Return the json object directly without encapsulating it in ```json```"
+}
