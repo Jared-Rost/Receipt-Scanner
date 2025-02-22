@@ -41,7 +41,7 @@ func main() {
 		}
 
 		// Extract text from the image
-		text, err := ocr.ExtractTextFromImage("receipt.jpeg")
+		text, err := ocr.ExtractTextFromImage("./images/" + file.Filename)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
@@ -50,19 +50,18 @@ func main() {
 
 		log.Println(text)
 
-		categories, err := ocr.SendTextToGemini(text)
+		receipt, categories, err := ocr.SendTextToGemini(text)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		}
 
-		log.Println(categories)
-
 		// Return the extracted text
 		return c.JSON(fiber.Map{
+			"receipt":    receipt,
 			"categories": categories,
-			"text":       text,
+			"rawText":    text,
 		})
 	})
 
