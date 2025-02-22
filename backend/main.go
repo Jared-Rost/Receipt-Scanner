@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/khalidzahra/receipt-scanner/ocr"
 	"github.com/khalidzahra/receipt-scanner/tts"
 )
@@ -15,6 +16,14 @@ func main() {
 
 	// Initialize a new Fiber app
 	app := fiber.New()
+
+	// Enable CORS for all origins
+	app.Use(cors.New(cors.Config{
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Content-Length", "Accept-Language", "Accept-Encoding", "Connection", "Access-Control-Allow-Origin"},
+		AllowOrigins:     []string{"*"},
+		AllowCredentials: false,
+		AllowMethods:     []string{"GET", "POST", "HEAD", "PUT", "DELETE", "PATCH", "OPTIONS"},
+	}))
 
 	// Define a route for the GET method on the root path '/'
 	app.Get("/", func(c fiber.Ctx) error {
