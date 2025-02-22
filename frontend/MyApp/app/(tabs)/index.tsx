@@ -15,6 +15,7 @@ interface Receipt {
 export default function HomeScreen() {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [newReceiptText, setNewReceiptText] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadReceipts();
@@ -66,9 +67,19 @@ export default function HomeScreen() {
     </View>
   );
 
+  const filteredReceipts = receipts.filter((receipt) =>
+    receipt.text.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Receipts</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Search receipts..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
       <TextInput
         style={styles.input}
         placeholder="Enter receipt text"
@@ -77,7 +88,7 @@ export default function HomeScreen() {
       />
       <Button title="Save Receipt" onPress={saveReceipt} />
       <FlatList
-        data={receipts}
+        data={filteredReceipts}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         style={styles.receiptList}
@@ -101,6 +112,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 8,
     marginBottom: 16,
+    borderRadius: 8,
   },
   receiptList: {
     marginTop: 16,
