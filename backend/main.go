@@ -48,8 +48,6 @@ func main() {
 			})
 		}
 
-		log.Println(text)
-
 		receipt, categories, err := ocr.SendTextToGemini(text)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -67,7 +65,7 @@ func main() {
 
 	app.Post("/tts", func(c fiber.Ctx) error {
 		var request struct {
-			Text string `json:"text"`
+			Receipt ocr.Receipt `json:"receipt"`
 		}
 
 		if err := json.Unmarshal(c.Body(), &request); err != nil {
@@ -76,13 +74,7 @@ func main() {
 			})
 		}
 
-		if request.Text == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Text field is required",
-			})
-		}
-
-		outputFile, err := tts.SendTextToSpeech(request.Text)
+		outputFile, err := tts.SendTextToSpeech(request.Receipt)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),

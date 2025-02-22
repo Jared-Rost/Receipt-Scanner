@@ -62,8 +62,8 @@ type Receipt struct {
 		UnitPrice  float64 `json:"unit_price"`
 		TotalPrice float64 `json:"total_price"`
 	} `json:"items"`
-	Tip   *float64 `json:"tip"`
-	Total float64  `json:"total"`
+	Tip   float64 `json:"tip"`
+	Total float64 `json:"total"`
 }
 
 type GeminiResponse struct {
