@@ -1,6 +1,6 @@
 import 'react-native-get-random-values';
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, Button, TextInput } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Button, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -10,12 +10,24 @@ interface Receipt {
   id: string;
   text: string;
   date: string;
+  category: string;
 }
+
+const categories = [
+  { name: 'grocery', color: '#FF6347' },
+  { name: 'dining', color: '#FFD700' },
+  { name: 'retail', color: '#006400' },
+  { name: 'entertainment', color: '#1E90FF' },
+  { name: 'technology', color: '#8A2BE2' },
+  { name: 'personal care', color: '#FF69B4' },
+  { name: 'other', color: '#A9A9A9' },
+];
 
 export default function HomeScreen() {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [newReceiptText, setNewReceiptText] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [newReceiptCategory, setNewReceiptCategory] = useState(categories[0].name);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   useEffect(() => {
     loadReceipts();
@@ -37,61 +49,70 @@ export default function HomeScreen() {
       );
       setReceipts(receiptData);
     } catch (error) {
-      console.error('Error loading receipts:', error);
+      console.error(error);
     }
   };
 
-  const saveReceipt = async () => {
-    try {
-      const receiptId = uuidv4();
-      const receipt: Receipt = {
-        id: receiptId,
-        text: newReceiptText,
-        date: new Date().toISOString(),
-      };
-      const receiptPath = `${RECEIPTS_DIR}/${receiptId}.json`;
+  const addReceipt = async () => {
+    const newReceipt: Receipt = {
+      id: uuidv4(),
+      text: newReceiptText,
+      date: new Date().toISOString(),
+      category: newReceiptCategory,
+    };
 
-      await FileSystem.writeAsStringAsync(receiptPath, JSON.stringify(receipt));
-
-      setReceipts((prevReceipts) => [...prevReceipts, receipt]);
-      setNewReceiptText('');
-    } catch (error) {
-      console.error('Error saving receipt:', error);
-    }
+    const filePath = `${RECEIPTS_DIR}/${newReceipt.id}.json`;
+    await FileSystem.writeAsStringAsync(filePath, JSON.stringify(newReceipt));
+    setReceipts([...receipts, newReceipt]);
+    setNewReceiptText('');
   };
 
-  const renderItem = ({ item }: { item: Receipt }) => (
-    <View style={styles.receiptItem}>
-      <Text style={styles.receiptText}>{item.text}</Text>
-      <Text style={styles.receiptDate}>{new Date(item.date).toLocaleDateString()}</Text>
-    </View>
-  );
+  const toggleCategory = (category: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
+    );
+  };
 
   const filteredReceipts = receipts.filter((receipt) =>
-    receipt.text.toLowerCase().includes(searchQuery.toLowerCase())
+    selectedCategories.length === 0 || selectedCategories.includes(receipt.category)
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Receipts</Text>
       <TextInput
         style={styles.input}
-        placeholder="Search receipts..."
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Enter receipt text"
+        placeholder="New receipt text"
         value={newReceiptText}
         onChangeText={setNewReceiptText}
       />
-      <Button title="Save Receipt" onPress={saveReceipt} />
+      <Button title="Add Receipt" onPress={addReceipt} />
+      <ScrollView horizontal style={styles.filterBar}>
+        {categories.map((category) => (
+          <TouchableOpacity
+            key={category.name}
+            style={[
+              styles.filterButton,
+              { backgroundColor: selectedCategories.length === 0 || selectedCategories.includes(category.name) ? category.color : '#D3D3D3' },
+              selectedCategories.includes(category.name) && styles.selectedFilter,
+            ]}
+            onPress={() => toggleCategory(category.name)}
+          >
+            <Text style={styles.filterButtonText}>
+              {category.name} ({receipts.filter((r) => r.category === category.name).length})
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
       <FlatList
         data={filteredReceipts}
-        renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        style={styles.receiptList}
+        renderItem={({ item }) => (
+          <View style={styles.receipt}>
+            <Text>{item.text}</Text>
+            <Text>{item.date}</Text>
+            <Text>{item.category}</Text>
+          </View>
+        )}
       />
     </View>
   );
@@ -100,33 +121,58 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
+    padding: 20,
   },
   input: {
+    height: 40,
+    borderColor: 'gray',
     borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 8,
-    marginBottom: 16,
-    borderRadius: 8,
+    marginBottom: 10,
+    paddingHorizontal: 10,
   },
-  receiptList: {
-    marginTop: 16,
+  categoryPicker: {
+    flexDirection: 'row',
+    marginBottom: 10,
   },
-  receiptItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+  categoryButton: {
+    flex: 1,
+    paddingVertical: 5,
+    marginHorizontal: 2,
+    alignItems: 'center',
+    borderRadius: 15,
   },
-  receiptText: {
-    fontSize: 16,
+  selectedCategory: {
+    borderWidth: 2,
+    borderColor: 'black',
   },
-  receiptDate: {
+  categoryButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
     fontSize: 12,
-    color: '#888',
+  },
+  filterBar: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  filterButton: {
+    paddingHorizontal: 5,
+    marginHorizontal: 2,
+    alignItems: 'center',
+    borderRadius: 15,
+    height: 20,
+  },
+  selectedFilter: {
+    borderWidth: 2,
+    borderColor: 'black',
+  },
+  filterButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  receipt: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'gray',
   },
 });
